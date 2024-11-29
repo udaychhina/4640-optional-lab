@@ -1,0 +1,18 @@
+---
+- name: install debugging tools and core packages
+  ansible.builtin.package:
+    update_cache: true
+    name: "{{ item }}"
+    state: latest
+  loop:
+    - bind9-dnsutils
+    - tcpdump
+    - nmap
+    - netcat-openbsd
+    - acl
+  become: true
+
+- name: set hostname to inventory name replace _ with -
+  ansible.builtin.hostname:
+    name: "{{ inventory_hostname | replace('_', '-')}}"
+  become: true

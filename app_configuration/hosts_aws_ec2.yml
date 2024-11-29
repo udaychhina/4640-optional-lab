@@ -1,0 +1,33 @@
+---
+plugin: amazon.aws.aws_ec2
+regions:
+  - us-west-2
+
+filters:
+  tag:Project: "acit4640_lab13"
+  instance-state-name: running
+
+# Set individual Variables
+compose:
+  # Configure ansible access to EC2 instances to use public DNS name
+  ansible_host: public_dns_name
+
+# Set the Inventory Hostname to be the EC2 Tag Name value without any prefix or separator
+hostnames:
+  - name: tag:Name
+    separator: ""
+    prefix: ""
+
+# Create inventory groups
+keyed_groups:
+  # Create a group for each Project 
+  # This matches the tag Project set using Terraform
+  - key: tags.Project
+    prefix: "project"
+    separator: "_"
+
+  # Create a group for each Server-Role
+  # This matches the tag Server_Role set using Terraform
+  - key: tags.Role
+    prefix: "role"
+    separator: "_"

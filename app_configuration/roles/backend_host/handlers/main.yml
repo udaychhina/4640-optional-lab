@@ -1,0 +1,29 @@
+---
+# handlers file for backend_host
+- name: restart and enable chat service
+  ansible.builtin.service:
+    name: chat
+    state: restarted
+    enabled: true
+    daemon_reload: true
+  become: true
+
+- name: install chat app requirements
+  ansible.builtin.command: 
+    /home/bun/.bun/bin/bun install
+  args:
+    chdir: "/var/www/chat"
+  become: true
+  become_user: bun
+
+- name: add bunx link
+  # bunx isn't created by installer 
+  ansible.builtin.file:
+    src:  /home/bun/.bun/bin/bun
+    dest: /home/bun/.bun/bin/bunx
+    state: link
+    owner: bun
+    group: bun
+    mode: u=rwx,g=rwx,o=rwx
+  become: true
+

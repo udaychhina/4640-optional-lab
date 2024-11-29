@@ -1,0 +1,92 @@
+---
+# tasks file for backend_host
+- name: install required packages for app
+  ansible.builtin.package:
+    name: "{{ item }}" 
+    state: latest
+    update_cache: true
+  loop:
+    - acl
+    - unzip
+    - libcap2-bin
+  become: true
+
+- name: create application user
+  ansible.builtin.user: 
+    name: bun
+    state: present
+    home: /home/bun
+    system: yes
+  become: true
+
+# use ansible "url" to download the bun installer script
+- name: download bun installer
+  ansible.builtin.get_url:
+    url: https://bun.sh/install
+    dest: /tmp/install
+    mode: u=rwx,g=rwx,o=rwx
+  become: true
+
+- name: install bun
+  ansible.builtin.shell: |
+    bash /tmp/install
+  args:
+    executable: /bin/bash
+    creates: /home/bun/.bun/bin/bun
+  become: true
+  become_user: bun
+  notify: 
+    - add bunx link
+
+- name: allow bun to bind to port 80
+  ansible.builtin.command:
+    cmd: "setcap CAP_NET_BIND_SERVICE=+eip /home/bun/.bun/bin/bun"
+  become: true
+
+- name: create backend directories
+  ansible.builtin.file:
+    path: "{{item.folder}}"
+    state: directory
+    owner: "{{item.owner}}"
+    group: "{{item.group}}"
+    mode: "{{item.mode}}"
+    recurse: yes
+  loop:
+    - folder: "/var/www/chat"
+      owner: bun
+      group: bun
+      mode: u=rwx,g=rx,o=rx 
+    - folder: "/var/log/chat"
+      owner: root
+      group: bun
+      mode: u=rwx,g=rwx,o=rx
+  become: true
+
+- name: copy application files
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "/var/www/chat/{{ item }}"
+    owner: bun
+    group: root
+    mode: u=rwx,g=rx,o=rx
+  loop:
+    - "bun.lockb"
+    - "index.ts"
+    - "package.json"
+    - "tsconfig.json"
+  become: true
+  notify: 
+    - install chat app requirements
+
+- name: configure chat service 
+  ansible.builtin.copy:
+    src: "chat.service" 
+    dest: "/etc/systemd/system/chat.service"
+    owner: root
+    group: root
+    mode: u=rw,g=rw,o=r
+  become: true
+  notify: 
+    - restart and enable chat service 
+
+

@@ -1,0 +1,14 @@
+[Unit]
+Description=Simple Chat App implemented in TypeScript using Bun
+After=network.target
+
+[Service]
+Type=simple
+User=bun
+WorkingDirectory=/var/www/chat
+ExecStart=/home/bun/.bun/bin/bun run index.ts
+Restart=always
+
+[Install]
+# start the app automatically
+WantedBy=multi-user.target

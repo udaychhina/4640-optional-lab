@@ -1,0 +1,11 @@
+:80 {
+  handle_path /chat/* {
+    reverse_proxy b01.lab13.internal
+  }
+
+  handle {
+    root * /var/www/html
+    file_server {
+      index index.html
+    }
+}
